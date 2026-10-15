@@ -60,5 +60,153 @@ Siendo un objeto Trigger y teniendo físicas, respondería a las reglas físicas
 
 ## Ejercicio 2
 
-Crea un controlador con las flechas arriba-abajo, derecha-izquierda que controle al cilindro con físicas.
+***Crea un controlador con las flechas arriba-abajo, derecha-izquierda que controle al cilindro con físicas.***
 
+Para este ejercicio se creó un script encargado del movimiento del cilindro, el cual permite el movimiento con las flechas del teclado. Este es el código del script:
+
+```csharp
+public class Ejercicio2 : MonoBehaviour
+{
+    [SerializeField] private float movementForce = 10f;
+
+    private Rigidbody rb;
+    private Vector3 movementDirection;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
+    private void Update()
+    {
+        movementDirection = Vector3.zero;
+
+        if (Input.GetKey(KeyCode.LeftArrow))  movementDirection += Vector3.left;
+        if (Input.GetKey(KeyCode.RightArrow)) movementDirection += Vector3.right;
+        if (Input.GetKey(KeyCode.UpArrow))    movementDirection += Vector3.forward;
+        if (Input.GetKey(KeyCode.DownArrow))  movementDirection += Vector3.back;
+
+        movementDirection = movementDirection.normalized;
+    }
+
+    private void FixedUpdate()
+    {
+        rb.AddForce(movementDirection * movementForce, ForceMode.Force);
+    }
+}
+```
+
+![Ejercicio 2](./Media/Fisicas2.gif)
+
+## Ejercicio 3
+
+***Crea varios cubos o esferas con Rigidbody dinámico. Muestra por consola el nombre del objeto con el que colisiona, y cámbiale su color al colisionar.***
+
+Para este ejercicio simplemente se modificó el script existente del ejercicio 2, agregando el método `OnCollisionEnter` que imprime el nombre del objeto con el que colisiona el cilindro. Este es el código modificado:
+
+```csharp
+    private void OnCollisionEnter(Collision collision)
+    {
+        Debug.Log($"Collided with: {collision.gameObject.name}");
+    }
+```
+
+Para el cubo y la esfera se les creó un script que hace que cambien de color cada vez que entran en colisión con otro objeto. Este es el código del script:
+
+```csharp
+public class Ejercicio3 : MonoBehaviour
+{
+    private Renderer renderer;
+
+    private void Awake()
+    {
+        renderer = GetComponent<Renderer>();
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        renderer.material.color = Random.ColorHSV();
+    }
+}
+```
+
+![Ejercicio 3](./Media/Fisicas3.gif)
+
+## Ejercicio 4
+
+***En la escena debe haber 3. Un cubo y un cilindro cinemáticos, una esfera con collider y Rigidbody. Marcar el cilindro como objetivo a alcanzar por la esfera. El cubo debe hacer de obstáculo entre ambos. Implementar un script que haga que la esfera se dirija al cilindro, cuando la esfera alcance el cubo, este debe cambiar su material y el cubo avanzar hacia adelante.***
+
+Para este ejercicio, se configuró la escena como se indica y se crearon dos scripts:
+
+En el primero, se le dice a la esfera que debe seguir al cilindro, que se mantiene estático en la escena debido a que es un objeto cinemático. En el caso de que esta colisione con el cubo (que tiene asignada la etiqueta "Obstacle"), debe cambiar el color de su material. Este es el código del script:
+
+```csharp
+public class Ejercicio4 : MonoBehaviour
+{
+    [SerializeField] private GameObject Cylinder;
+    [SerializeField] private float movementForce = 10f;
+    private Rigidbody rb;
+    private Renderer renderer;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        renderer = GetComponent<Renderer>();
+    }
+
+    private void FixedUpdate()
+    {
+        if (Cylinder == null || rb == null)
+        {
+            return;
+        }
+
+        Vector3 direction = Cylinder.transform.position - transform.position;
+        rb.AddForce(direction.normalized * movementForce, ForceMode.Force);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Obstacle"))
+        {
+            Debug.Log("Collided with an obstacle!");
+            renderer.material.color = Random.ColorHSV();
+        }
+    }
+}
+```
+
+En el segundo script, se le dice al cubo que debe avanzar hacia adelante (en su vector forward)cuando colisione con la esfera. Este es el código del script:
+
+```csharp
+[RequireComponent(typeof(Rigidbody))]
+public class Ejercicio4_Cube : MonoBehaviour
+{
+    [SerializeField] private float movementSpeed = 10f;
+    private Rigidbody rb;
+    private bool isMoving;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
+    private void FixedUpdate()
+    {
+        if (!isMoving) return;
+
+        rb.MovePosition(rb.position + transform.forward * movementSpeed * Time.fixedDeltaTime);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Sphere"))
+        {
+            Debug.Log("Collided with the Sphere!");
+            isMoving = true;
+        }
+    }
+}
+```
+
+![Ejercicio 4](./Media/Fisicas4.gif)
